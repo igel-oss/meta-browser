@@ -26,9 +26,9 @@ Maintainers: Eric Bénard <eric@eukrea.com>
              Otavio Salvador <otavio@ossystems.com.br>
 
 When sending single patches, please use something like :
-git send-email -1 --to openembedded-devel@lists.openembedded.org --subject-prefix='meta-browser][PATCH'
+git send-email -1 -s --to openembedded-devel@lists.openembedded.org --subject-prefix='meta-browser][PATCH'
 
-TODO
-----
-- enable Chromium WebGL with OpenGL ES support
-- fix Chromium support other platforms than armv7
+Recipes
+-------
+recipes-browser/chromium: Chromium browser. See its own README for more
+                          information.
