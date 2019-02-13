@@ -35,6 +35,8 @@ SRC_URI += " \
         file://0001-ozone-wayland-Do-not-add-window-if-manager-does-not-.patch \
         file://0001-ozone-wayland-Fix-NativeGpuMemoryBuffers-usage.patch \
         file://0001-Add-OMX-video-decode-accelerator-for-R-Car-platform.patch \
+	file://0001-AGL-Renesas-R-car-M3-define-GBM_BO_USE_LINEAR.patch \
+	file://0001-AGL-Renesas-R-car-m3-use-drm-ioctl-instead-of-some-g.patch \
 "
 
 # Chromium can use v4l2 device for hardware accelerated video decoding. Make sure that
