@@ -34,11 +34,17 @@ SRC_URI += " \
         file://0002-Add-mmap-via-libv4l-to-generic_v4l2_device.patch \
         file://0001-ozone-wayland-Do-not-add-window-if-manager-does-not-.patch \
         file://0001-ozone-wayland-Fix-NativeGpuMemoryBuffers-usage.patch \
+        file://0001-Add-OMX-video-decode-accelerator-for-R-Car-platform.patch \
 "
 
 # Chromium can use v4l2 device for hardware accelerated video decoding. Make sure that
 # /dev/video-dec exists.
 PACKAGECONFIG[use-linux-v4l2] = "use_v4l2_codec=true use_v4lplugin=true use_linux_v4l2_only=true"
+
+# Chromium can also use the OMX API for hardware accelerated video decoding on the
+# R-Car platform.  No extra device files are needed in this case. Should not be used at the
+# same time as the "use-linux-v4l2" setting
+PACKAGECONFIG[use-omx] = "use_omx_codec=true"
 
 GN_ARGS += "\
         ${PACKAGECONFIG_CONFARGS} \
