@@ -1,7 +1,7 @@
-From abe8e0f40b5a53fafbd1d3f7fb6358c158c4adb5 Mon Sep 17 00:00:00 2001
+From b50a8a8c139b9a098f56f3e89a500edb9fa89a04 Mon Sep 17 00:00:00 2001
 From: Damian Hobson-Garcia <dhobsong@igel.co.jp>
-Date: Fri, 17 May 2019 14:43:37 +0900
-Subject: [PATCH] Add OMX video decode accelerator for R-Car platform
+Date: Thu, 25 Jul 2019 17:10:35 +0900
+Subject: [PATCH]  Add OMX video decode accelerator for R-Car platform
 
 Can be enabled by setting the use_omx_codec=true gn flag and compile time.
 Does not update the gpu blacklist so will still need to run chromium
@@ -16,8 +16,8 @@ with the --disable-gpu-blacklist flag for this to work.
  media/gpu/omx/mmngrbuf.sig                    |    8 +
  media/gpu/omx/omx.sig                         |   11 +
  media/gpu/omx/omx_stub_header.fragment        |    9 +
- .../gpu/omx/omxr_video_decode_accelerator.cc  | 1643 +++++++++++++++++
- media/gpu/omx/omxr_video_decode_accelerator.h |  361 ++++
+ .../gpu/omx/omxr_video_decode_accelerator.cc  | 1646 +++++++++++++++++
+ media/gpu/omx/omxr_video_decode_accelerator.h |  365 ++++
  .../gpu/video_decode_accelerator_unittest.cc  |    6 +
  third_party/mmngr/mmngr_buf_user_public.h     |   48 +
  third_party/mmngr/mmngr_public_cmn.h          |   69 +
@@ -49,7 +49,7 @@ with the --disable-gpu-blacklist flag for this to work.
  third_party/openmax/il/OMX_Types.h            |  361 ++++
  third_party/openmax/il/OMX_Video.h            | 1060 +++++++++++
  third_party/openmax/il/OMX_VideoExt.h         |  123 ++
- 42 files changed, 10760 insertions(+), 3 deletions(-)
+ 42 files changed, 10767 insertions(+), 3 deletions(-)
  create mode 100644 media/gpu/omx/mmngr.sig
  create mode 100644 media/gpu/omx/mmngrbuf.sig
  create mode 100644 media/gpu/omx/omx.sig
@@ -365,10 +365,10 @@ index 0000000..c7501fc
 +}
 diff --git a/media/gpu/omx/omxr_video_decode_accelerator.cc b/media/gpu/omx/omxr_video_decode_accelerator.cc
 new file mode 100644
-index 0000000..8ee14ac
+index 0000000..dbcec93
 --- /dev/null
 +++ b/media/gpu/omx/omxr_video_decode_accelerator.cc
-@@ -0,0 +1,1643 @@
+@@ -0,0 +1,1646 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -496,9 +496,18 @@ index 0000000..8ee14ac
 +    return *profile_manager;
 +}
 +
++void OmxrVideoDecodeAccelerator::OmxrProfileManager::InitOMXLibs() {
++    StubPathMap paths;
++    paths[kModuleOmx].push_back(kOMXLib);
++    paths[kModuleMmngr].push_back(kMMNGRLib);
++    paths[kModuleMmngrbuf].push_back(kMMNGRBufLib);
++    InitializeStubs(paths);
++}
++
 +OmxrVideoDecodeAccelerator::OmxrProfileManager::OmxrProfileManager() {
 +    OMX_HANDLETYPE component_handle;
 +
++    InitOMXLibs();
 +    OMX_Init();
 +
 +    OMX_CALLBACKTYPE omx_accelerator_callbacks = {
@@ -1919,12 +1928,6 @@ index 0000000..8ee14ac
 +// static
 +void OmxrVideoDecodeAccelerator::PreSandboxInitialization() {
 +  VLOG(1) << "Starting pre sandbox init";
-+  StubPathMap paths;
-+  paths[kModuleOmx].push_back(kOMXLib);
-+  paths[kModuleMmngr].push_back(kMMNGRLib);
-+  paths[kModuleMmngrbuf].push_back(kMMNGRBufLib);
-+  InitializeStubs(paths);
-+
 +  //enumerate and dlopen codec libraries*/
 +  OmxrProfileManager::Get();
 +}
@@ -2014,10 +2017,10 @@ index 0000000..8ee14ac
 +}  // namespace content
 diff --git a/media/gpu/omx/omxr_video_decode_accelerator.h b/media/gpu/omx/omxr_video_decode_accelerator.h
 new file mode 100644
-index 0000000..7c2c59d
+index 0000000..9eccb04
 --- /dev/null
 +++ b/media/gpu/omx/omxr_video_decode_accelerator.h
-@@ -0,0 +1,361 @@
+@@ -0,0 +1,365 @@
 +// Copyright (c) 2012 The Chromium Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -2156,6 +2159,10 @@ index 0000000..7c2c59d
 +
 +    const struct CodecInfo getCodecForProfile(VideoCodecProfile profile) const;
 +    const std::vector<VideoCodecProfile> & getSupportedProfiles() const { return supported_profiles_;}
++
++  private:
++    void InitOMXLibs(void);
++
 +  private:
 +    std::vector<std::pair<struct CodecInfo, std::vector<VideoCodecProfile>>> possible_profiles_ = {
 +        {{H264, "video_decoder.avc", nullptr}, {H264PROFILE_BASELINE, H264PROFILE_MAIN, H264PROFILE_HIGH}},
@@ -2380,7 +2387,7 @@ index 0000000..7c2c59d
 +
 +#endif  // CONTENT_COMMON_GPU_MEDIA_OMX_VIDEO_DECODE_ACCELERATOR_H_
 diff --git a/media/gpu/video_decode_accelerator_unittest.cc b/media/gpu/video_decode_accelerator_unittest.cc
-index 09289b9..e3f61fc 100644
+index 09289b9..f40efd7 100644
 --- a/media/gpu/video_decode_accelerator_unittest.cc
 +++ b/media/gpu/video_decode_accelerator_unittest.cc
 @@ -84,6 +84,10 @@
