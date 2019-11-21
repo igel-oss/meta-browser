@@ -16,6 +16,12 @@ DEPENDS += "\
         wayland-native \
 "
 
+ENABLE_MOJO_GN = '\
+        enable_mojo_media=true \
+        mojo_media_services=["video_decoder"] \
+        mojo_media_host="gpu" \
+    '
+
 # Chromium can use v4l2 device for hardware accelerated video decoding. Make sure that
 # /dev/video-dec exists.
 PACKAGECONFIG[use-linux-v4l2] = "use_v4l2_codec=true use_v4lplugin=true use_linux_v4l2_only=true"
@@ -24,6 +30,8 @@ PACKAGECONFIG[use-linux-v4l2] = "use_v4l2_codec=true use_v4lplugin=true use_linu
 # R-Car platform.  No extra device files are needed in this case. Should not be used at the
 # same time as the "use-linux-v4l2" setting
 PACKAGECONFIG[use-omx] = "use_omx_codec=true"
+
+GN_ARGS += "${@bb.utils.contains_any('PACKAGECONFIG', 'use-omx use-linux-v4l2', '${ENABLE_MOJO_GN}', '', d)}"
 
 GN_ARGS += "\
         ${PACKAGECONFIG_CONFARGS} \
